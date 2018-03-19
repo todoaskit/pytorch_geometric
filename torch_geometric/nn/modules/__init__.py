@@ -3,5 +3,7 @@ from .graph_conv import GraphConv
 from .cheb_conv import ChebConv
 from .graph_attention import GraphAttention
 from .mlp_conv import MLPConv
+from .inv_graphics_conv import InvGraphConv
 
-__all__ = ['SplineConv', 'GraphConv', 'ChebConv', 'GraphAttention', 'MLPConv']
+__all__ = ['SplineConv', 'GraphConv', 'ChebConv', 'GraphAttention', 'MLPConv',
+           'InvGraphConv']

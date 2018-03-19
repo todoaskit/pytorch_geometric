@@ -33,8 +33,8 @@ test_loader = DataLoader2(test_dataset, batch_size=1)
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = SplineConv(1, 64, dim=3, kernel_size=5)
-        self.conv2 = SplineConv(64, 64, dim=3, kernel_size=5)
+        self.conv1 = SplineConv(1, 32, dim=3, kernel_size=5)
+        self.conv2 = SplineConv(32, 64, dim=3, kernel_size=5)
         self.conv3 = SplineConv(64, 64, dim=3, kernel_size=5)
         self.conv4 = SplineConv(64, 64, dim=3, kernel_size=5)
         self.conv5 = SplineConv(64, 64, dim=3, kernel_size=5)
@@ -80,7 +80,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 def train(epoch):
     model.train()
 
-    if epoch == 61:
+    if epoch == 37:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = 0.005
+
+    if epoch == 80:
         for param_group in optimizer.param_groups:
             param_group['lr'] = 0.001
 
@@ -120,6 +124,6 @@ def test(epoch):
     print('Accuracy 10:', acc_10 / (20 * 6890))
 
 
-for epoch in range(1, 101):
+for epoch in range(1, 121):
     train(epoch)
     test(epoch)
