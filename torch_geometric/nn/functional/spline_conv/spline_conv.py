@@ -8,6 +8,7 @@ def spline_conv(
         adj,  # Pytorch Tensor (!bp_to_adj) or Pytorch Variable (bp_to_adj)
         input,  # Pytorch Variable
         weight,  # Pytorch Variable
+        e_input,
         kernel_size,  # Rest tensors or python variables
         is_open_spline,
         K,
@@ -26,6 +27,11 @@ def spline_conv(
 
     # Get features for every end vertex with shape [|E| x M_in].
     output = input[col]
+    if e_input is not None:
+        output = torch.cat([output, e_input], dim=1)
+        input_ph = Variable(torch.zeros(input.size(0), e_input.size(1)).cuda())
+        input = torch.cat([input, input_ph],
+                          dim=1)
 
     bp_to_adj = False if torch.is_tensor(values) else True
     # Convert to [|E| x M_in] feature matrix and calculate [|E| x M_out].

@@ -16,19 +16,21 @@ def inv_graphics_conv(
 
     # Compute params for transformation matrices
     transform = F.elu(local_stn[0](adj, ones))
-    transform = F.elu(local_stn[1](adj, transform))
+    transform = F.elu(local_stn[1](transform))
     transform = F.elu(local_stn[2](transform))
-    transform_params = np.pi * F.tanh(local_stn[3](transform))
+    transform = F.elu(local_stn[3](transform))
+    #transform_params = 2*np.pi * F.tanh(local_stn[4](transform))
+    transform_params = local_stn[4](transform)
 
     # Locally transform inputs
 
     values = adj['values']
-    _, col = adj['indices']
+    row, col = adj['indices']
 
-    transform_params_edge_wise = transform_params[col]
+    transform_params_edge_wise = transform_params[row]
 
     # Center to zero
-    t_values = values - 0.5
+    t_values = values.detach() - 0.5
 
     # Rotate X
     cos = torch.cos(transform_params_edge_wise[:, :3])
@@ -42,10 +44,10 @@ def inv_graphics_conv(
                          dim=1)
 
     # Rotate Y
-    t_values = torch.cat([(cos[:, 1] * t_values[:, 0] -
+    t_values = torch.cat([(cos[:, 1] * t_values[:, 0] +
                            sin[:, 1] * t_values[:, 2]).unsqueeze(1),
                           t_values[:, 1].unsqueeze(1),
-                          (sin[:, 1] * t_values[:, 0] +
+                          (-sin[:, 1] * t_values[:, 0] +
                            cos[:, 1] * t_values[:, 2]).unsqueeze(1)],
                          dim=1)
 
@@ -60,8 +62,10 @@ def inv_graphics_conv(
     # CovarianceMatrix
     C = torch.matmul(t_values.view(-1, 3, 1), t_values.view(-1, 1, 3))
 
-    C = scatter_mean(Variable(col.view(-1, 1, 1).expand_as(C)), C)
-    C_mean = torch.abs(C).mean(0).view(9)
+    C = scatter_mean(Variable(row.view(-1, 1, 1).expand_as(C)), C)
+    C_mean = torch.abs(C).mean(0)
+    #print(C_mean[:,:])
+    C_mean = C_mean.view(9)
     C_loss = C_mean[1:4].sum() + C_mean[5:8].sum() + \
              torch.clamp(C_mean[4] - C_mean[0], min=0) + \
              torch.clamp(C_mean[8] - C_mean[4], min=0)
@@ -83,14 +87,20 @@ def inv_graphics_conv(
                        'size': adj['size']}
 
     # Conv layer on transformed input
-    output = conv(transformed_adj, input)
+    output = input
+    for conv_layer in conv:
+        output = conv_layer(transformed_adj, output)
 
-    rotation = torch.sin(transform_params[:, :3])
+
+    #rotation_sin = torch.sin(transform_params[:, :3])
+    #rotation_cos = torch.cos(transform_params[:, :3])
+    rotation = transform_params[:, :3]
     #scaling_factors = F.sigmoid(transform_params[:, 3:])
 
 
     output = torch.cat([F.elu(output),
                         #scaling_factors.detach(),
+                        #rotation_sin.detach(),
                         rotation.detach()], dim=1)
     #output = torch.cat([F.elu(output), transform_params], dim=1)
 

@@ -1,6 +1,7 @@
 import torch
 import scipy.spatial
 import numpy as np
+from torch_unique import unique
 
 
 def nn_graph(pos, k=6):
@@ -21,11 +22,11 @@ def radius_graph(data, radius):
     indices = np.array([x + [None] * (length - len(x)) for x in indices])
 
     # Nodes with no neighbors
-    no_neighbors = indices[indices[:, 1] == None]
-    no_neighbor_idx = no_neighbors[:, 0]
-    nns = np.array(tree.query(tree.data[indices[:, 1] == None], k=2))[1, :, 1]
+    #no_neighbors = indices[indices[:, 1] == None]
+    #no_neighbor_idx = no_neighbors[:, 0]
+    #nns = np.array(tree.query(tree.data[indices[:, 1] == None], k=2))[1, :, 1]
 
-    indices[np.int32(no_neighbor_idx), 1] = np.int32(nns)
+    #indices[np.int32(no_neighbor_idx), 1] = np.int32(nns)
 
     # Convert to sparse rep
     shape = indices.shape
@@ -37,5 +38,5 @@ def radius_graph(data, radius):
 
     # Eliminate Nones and self-edges
     indices = indices[indices[:, 1] != None]
-    indices = indices[indices[:, 0] != indices[:, 1]]
+    # indices = indices[indices[:, 0] != indices[:, 1]]
     return torch.LongTensor(indices.transpose().astype(np.long))

@@ -85,10 +85,10 @@ class SplineConv(Module):
         uniform(size, self.weight)
         uniform(size, self.bias)
 
-    def forward(self, adj, input):
+    def forward(self, adj, input, e_input=None):
 
         return spline_conv(
-            adj, input, self.weight, self._buffers['_kernel_size'],
+            adj, input, self.weight, e_input, self._buffers['_kernel_size'],
             self._buffers['_is_open_spline'], self.K, self.forward_kernel,
             self.backward_kernel, self.basis_kernel,
             self.basis_backward_kernel, self.degree, self.bias)

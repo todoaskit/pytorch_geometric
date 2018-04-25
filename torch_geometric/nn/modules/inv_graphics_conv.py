@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Module, Parameter
 from torch.nn import Linear
+from torch.nn import ModuleList
 
 from .utils.inits import uniform
 from .utils.repr import repr
@@ -40,6 +41,7 @@ class InvGraphConv(Module):
                  out_features,
                  dim,
                  kernel_size,
+                 num_conv=1,
                  is_open_spline=True,
                  degree=1,
                  bias=True):
@@ -55,26 +57,31 @@ class InvGraphConv(Module):
                                              is_open_spline=is_open_spline,
                                              degree=degree, bias=bias)
 
-        self.local_stn2 = SplineConv(64, 64, dim=dim,
-                                     kernel_size=kernel_size,
-                                     is_open_spline=is_open_spline,
-                                     degree=degree, bias=bias)
 
+        self.local_stn2 = Linear(64, 64)
 
         self.local_stn3 = Linear(64, 64)
 
-        self.local_stn4 = Linear(64, 3)
+        self.local_stn4 = Linear(64, 64)
 
-        self.local_stn5 = SplineConv(32, 6, dim=dim,
+        self.local_stn5 = Linear(64, 3)
+
+        self.local_stn6 = SplineConv(32, 6, dim=dim,
                                              kernel_size=kernel_size,
                                              is_open_spline=is_open_spline,
                                              degree=degree, bias=bias)
 
-        self.conv = SplineConv(in_features, out_features, dim=dim,
+        self.conv_layers = [SplineConv(in_features, out_features, dim=dim,
                                              kernel_size=kernel_size,
                                              is_open_spline=is_open_spline,
-                                             degree=degree, bias=bias)
+                                             degree=degree, bias=bias)]
+        for _ in range(1, num_conv):
+            self.conv_layers.append(SplineConv(out_features, out_features,
+                                               dim=dim, kernel_size=kernel_size,
+                                               is_open_spline=is_open_spline,
+                                               degree=degree, bias=bias))
 
+        self.conv_layers = ModuleList(self.conv_layers)
 
     def reset_parameters(self):
         size = self.in_features * (self.K + 1)
@@ -84,8 +91,8 @@ class InvGraphConv(Module):
     def forward(self, adj, input):
         return inv_graphics_conv(
             adj, input, [self.local_stn1, self.local_stn2, self.local_stn3,
-                         self.local_stn4],
-            self.conv)
+                         self.local_stn4, self.local_stn5],
+            self.conv_layers)
 
     def __repr__(self):
         return repr(self, ['kernel_size', 'is_open_spline', 'degree'])

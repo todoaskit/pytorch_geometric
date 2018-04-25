@@ -5,13 +5,14 @@ from torch_scatter import scatter_max, scatter_mean, scatter_add
 from .coalesce import remove_self_loops, coalesce
 
 
-def _pool(index, position, cluster, weight):
+def _pool(index, position, cluster, weight, rm_self_loops=True):
     # Map edge indices to new cluster indices.
     index = index.contiguous()
     index = cluster[index.view(-1)].view(2, -1)
-    index = remove_self_loops(index)  # Remove self loops.
-    #if index.dim() == 1:
-    #    index = index.view(2,1)
+    if rm_self_loops:
+        index = remove_self_loops(index)  # Remove self loops.
+    if index.dim() == 1:
+        index = index.view(2,1)
     index = coalesce(index)  # Remove duplicates.
     cluster = cluster.unsqueeze(1).expand(-1, position.size(1))
     cluster = cluster if torch.is_tensor(position) else Variable(cluster)

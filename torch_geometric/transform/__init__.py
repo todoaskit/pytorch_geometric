@@ -11,10 +11,11 @@ from .spherical_2d import Spherical2dAdj
 from .random_flip import RandomFlip
 from .sample_pointcloud import SamplePointcloud, PCToGraphNN, PCToGraphRad
 from .target_indegree import TargetIndegreeAdj
+from .cartsphere import CartesianSphereAdj
 
 __all__ = [
     'CartesianAdj', 'RandomTranslate', 'RandomScale', 'RandomRotate',
     'RandomShear', 'NormalizeScale', 'CartesianLocalAdj', 'SphericalAdj',
     'Spherical2dAdj', 'LogCartesianAdj', 'RandomFlip', 'PCToGraphRad',
-    'PCToGraphNN', 'SamplePointcloud', 'TargetIndegreeAdj'
+    'PCToGraphNN', 'SamplePointcloud', 'TargetIndegreeAdj', 'CartesianSphereAdj'
 ]
