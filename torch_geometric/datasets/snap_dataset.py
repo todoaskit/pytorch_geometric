@@ -337,12 +337,13 @@ def read_gemsec(files, name):
 
 
 def read_musae(paths, name):
-    if name == 'twitch':
+    if name in ['twitch', 'wiki']:
         data_list = []
         for path in paths:
             if osp.isdir(path):
                 _paths = [osp.join(path, file) for file in os.listdir(path)]
-                data = read_musae_helper(_paths, name)
+                graph_name = osp.basename(osp.dirname(_paths[0]))
+                data = read_musae_helper(_paths, name, graph_name)
                 data_list.append(data)
         return data_list
     else:
@@ -350,7 +351,7 @@ def read_musae(paths, name):
         return [data]
 
 
-def read_musae_helper(paths, name):
+def read_musae_helper(paths, name, data_name=None):
     x, edge_index, y, num_nodes = None, None, None, None
 
     for file in paths:
@@ -381,8 +382,13 @@ def read_musae_helper(paths, name):
             with open(osp.join(path, file)) as f:
                 dict = json.load(f)
 
-            if name == 'twitch':
-                num_features = 3170
+            if name in ['twitch', 'wiki']:
+                if name == 'twitch':
+                    num_features = 3170
+                elif name == 'wiki':
+                    num_features = 13183
+                else:
+                    raise ValueError
                 x = torch.zeros(len(dict), num_features)
                 for i in range(len(dict)):
                     for f in dict[str(i)]:
@@ -391,7 +397,7 @@ def read_musae_helper(paths, name):
                 features = np.unique(np.asarray(
                            [i for _list in list(dict.values())
                             for i in _list]))
-                f_assoc = {}
+                f_assoc, num_features = {}, 0
                 for i, j in enumerate(features):
                     f_assoc[j] = i
                     num_features = i+1
@@ -401,7 +407,8 @@ def read_musae_helper(paths, name):
                     for f in dict[str(i)]:
                         x[i][f_assoc[f]] = 1
 
-    return Data(x=x, edge_index=edge_index, y=y, num_nodes=num_nodes)
+    return Data(x=x, edge_index=edge_index, y=y,
+                num_nodes=num_nodes, name=data_name)
 
 
 class SNAPDataset(InMemoryDataset):
@@ -447,6 +454,7 @@ class SNAPDataset(InMemoryDataset):
         'musae-twitch': ['twitch.zip'],
         'musae-facebook': ['facebook_large.zip'],
         'musae-github': ['git_web_ml.zip'],
+        'musae-wiki': ['wikipedia.zip'],
         'com-livejournal': ['com-lj.ungraph.txt.gz',
                             'com-lj.all.cmty.txt.gz'],
         'com-friendster': ['com-friendster.ungraph.txt.gz',
