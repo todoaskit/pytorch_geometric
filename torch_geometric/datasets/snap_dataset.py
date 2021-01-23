@@ -214,7 +214,7 @@ def read_ego(files, name):
                                 dtype=np.float32)
         x_ego = torch.from_numpy(x_ego.values)
 
-        row_ego = torch.full((x.size(0), ), x.size(0), dtype=torch.long)
+        row_ego = torch.full((x.size(0),), x.size(0), dtype=torch.long)
         col_ego = torch.arange(x.size(0))
 
         # Ego node should be connected to every other node.
@@ -248,7 +248,7 @@ def read_soc(files, name):
         edge_attr = torch.from_numpy(d[[2, 3]].to_numpy())
 
         idx = torch.unique(edge_index.flatten())
-        idx_assoc = torch.full((edge_index.max() + 1, ), -1, dtype=torch.long)
+        idx_assoc = torch.full((edge_index.max() + 1,), -1, dtype=torch.long)
         idx_assoc[idx] = torch.arange(idx.size(0))
 
         edge_index = idx_assoc[edge_index]
@@ -286,7 +286,7 @@ def read_wiki(files, name):
     edge_index = torch.from_numpy(edge_index.values).t()
 
     idx = torch.unique(edge_index.flatten())
-    idx_assoc = torch.full((edge_index.max() + 1, ), -1, dtype=torch.long)
+    idx_assoc = torch.full((edge_index.max() + 1,), -1, dtype=torch.long)
     idx_assoc[idx] = torch.arange(idx.size(0))
 
     edge_index = idx_assoc[edge_index]
@@ -393,14 +393,15 @@ def read_musae_helper(paths, name, data_name=None):
                 for i in range(len(dict)):
                     for f in dict[str(i)]:
                         x[i][f] = 1
+
             else:
                 features = np.unique(np.asarray(
-                           [i for _list in list(dict.values())
-                            for i in _list]))
+                    [i for _list in list(dict.values())
+                     for i in _list]))
                 f_assoc, num_features = {}, 0
                 for i, j in enumerate(features):
                     f_assoc[j] = i
-                    num_features = i+1
+                    num_features = i + 1
 
                 x = torch.zeros(len(dict), num_features)
                 for i in range(len(dict)):
