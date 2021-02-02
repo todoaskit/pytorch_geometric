@@ -1,4 +1,5 @@
 import copy
+from collections import OrderedDict
 from itertools import repeat, product
 
 import torch
@@ -28,6 +29,7 @@ class InMemoryDataset(Dataset):
             value, indicating whether the data object should be included in the
             final dataset. (default: :obj:`None`)
     """
+
     @property
     def raw_file_names(self):
         r"""The name of the files to find in the :obj:`self.raw_dir` folder in
@@ -145,3 +147,30 @@ class InMemoryDataset(Dataset):
         dataset.__data_list__ = data_list
         dataset.data, dataset.slices = self.collate(data_list)
         return dataset
+
+    def statistics(self, stat_names=None, stat_functions=None,
+                   verbose=True):
+        if stat_names is None:
+            stat_names = ['x', 'edge_index']
+        if stat_functions is None:
+            stat_functions = [
+                torch.mean, torch.std,
+                torch.min, torch.max, torch.median,
+            ]
+        stat_dict = OrderedDict()
+        for name in stat_names:
+            if name in self.slices:
+                s_vec = (self.slices[name][1:] - self.slices[name][:-1])
+                s_vec = s_vec.float()
+                for func in stat_functions:
+                    stat_dict[(name, func.__name__)] = func(s_vec)
+        if verbose:
+            print("-------------------------------------------------------")
+            print("{:>15}{:>15}{:>25}".format("variable", "stat", "value"))
+            print("=======================================================")
+            for k, v in stat_dict.items():
+                print("{:>15}{:>15}{:>25}".format(*k, str(float(v))))
+            print("-------------------------------------------------------")
+            print("Among {} graphs".format(len(self)).rjust(55))
+
+        return stat_dict
